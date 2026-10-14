@@ -1,0 +1,23 @@
+import { StyleSheet } from 'react-native';
+export const s = StyleSheet.create({
+  screen: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  h1: { fontSize: 24, fontWeight: '700', marginVertical: 8 },
+  h2: { fontSize: 16, fontWeight: '600', marginVertical: 12 },
+  title: { fontSize: 17, fontWeight: '600' },
+  price: { fontSize: 22, color: '#1565c0', fontWeight: '700' },
+  stock: { fontSize: 16, marginVertical: 4 },
+  row: { fontSize: 15, marginVertical: 3 },
+  muted: { color: '#888' },
+  link: { color: '#1565c0', fontSize: 16, marginBottom: 8 },
+  card: { padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', marginBottom: 10 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, marginBottom: 8 },
+  photo: { width: 220, height: 220, borderRadius: 10, marginRight: 8, marginVertical: 8 },
+  thumb: { width: 70, height: 70, borderRadius: 8, marginRight: 6, marginTop: 8 },
+  bigBtn: { backgroundColor: '#f9a825', padding: 20, borderRadius: 12, alignItems: 'center' },
+  bigBtnText: { fontSize: 18, fontWeight: '700', color: '#000' },
+  btn: { backgroundColor: '#1565c0', padding: 12, borderRadius: 8, marginRight: 8, marginTop: 8 },
+  btnText: { color: '#fff', fontWeight: '600' },
+  btnRow: { flexDirection: 'row', marginTop: 12 },
+  tabs: { flexDirection: 'row', borderTopWidth: 1, borderColor: '#ddd' },
+  tab: { flex: 1, padding: 16, alignItems: 'center' },
+});
