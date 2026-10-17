@@ -1,30 +1,52 @@
-// Turns an image into a 512-number CLIP embedding.
-// Deploy: supabase functions deploy embed-image
-// Secret: supabase secrets set HF_TOKEN=hf_xxx
-// Optional: set EMBED_URL to your own CLIP server (must return a 512-d vector).
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Image -> 512-number embedding using Jina CLIP v2 (Matryoshka, truncated to 512 dims).
+// Secret needed:  supabase secrets set JINA_API_KEY=jina_xxx
+// Deploy:         supabase functions deploy embed-image
 
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" };
+declare const Deno: any;
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': '*',
+};
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...cors, 'Content-Type': 'application/json' },
+  });
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+Deno.serve(async req => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
+    const key = Deno.env.get('JINA_API_KEY');
+    if (!key) return json({ error: 'JINA_API_KEY secret is not set' }, 500);
+
     const { image } = await req.json();
-    const bytes = Uint8Array.from(atob(image), (c) => c.charCodeAt(0));
-    const url = Deno.env.get("EMBED_URL") ??
-      "https://api-inference.huggingface.co/models/openai/clip-vit-base-patch32";
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${Deno.env.get("HF_TOKEN")}` },
-      body: bytes,
+    if (!image) return json({ error: 'No image received' }, 400);
+
+    const res = await fetch('https://api.jina.ai/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: 'jina-clip-v2',
+        dimensions: 512,
+        input: [{ image }],
+      }),
     });
-    if (!res.ok) throw new Error(await res.text());
-    let emb = await res.json();
-    while (Array.isArray(emb[0])) emb = emb[0];
-    const norm = Math.sqrt(emb.reduce((s: number, v: number) => s + v * v, 0));
-    emb = emb.map((v: number) => v / norm);
-    return new Response(JSON.stringify({ embedding: emb }), { headers: { ...cors, "Content-Type": "application/json" } });
+    const text = await res.text();
+    if (!res.ok)
+      return json(
+        { error: `Jina API ${res.status}: ${text.slice(0, 300)}` },
+        500,
+      );
+
+    let emb: number[] = JSON.parse(text).data[0].embedding;
+    const norm = Math.sqrt(emb.reduce((s, v) => s + v * v, 0)) || 1;
+    emb = emb.map(v => v / norm);
+    return json({ embedding: emb });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: cors });
+    return json({ error: String(e) }, 500);
   }
 });
